@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>El Rincón de las Ideas</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Spectral:ital,wght@0,300;0,400;0,500;1,300;1,400;1,500&family=Space+Grotesk:wght@400;500;600&display=swap');
+
+  :root{
+    --noche:#0a1330;
+    --indigo:#1c2d5e;
+    --indigo-luz:#2e4488;
+    --plata:#eef1fb;
+    --lavanda:#9d8cff;
+    --aurora:#ff9ec4;
+    --dorado:#f0c869;
+    --cian-tenue:#7ddde0;
+  }
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{
+    width:100%;height:100%;
+    background:var(--noche);
+    overflow:hidden;
+    font-family:'Spectral', serif;
+  }
+
+  #app{
+    position:relative;
+    width:100%;height:100vh;
+    background:
+      radial-gradient(ellipse 700px 500px at 18% 12%, rgba(157,140,255,0.16), transparent 60%),
+      radial-gradient(ellipse 600px 600px at 85% 85%, rgba(255,158,196,0.10), transparent 55%),
+      radial-gradient(ellipse 900px 700px at 50% 105%, rgba(46,68,136,0.4), transparent 60%),
+      linear-gradient(175deg, #060b1f 0%, var(--noche) 45%, #0d1940 100%);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+
+  /* ---------- Cielo estrellado ---------- */
+  .cielo{
+    position:absolute;
+    top:0;left:0;width:100%;height:100%;
+    pointer-events:none;
+    overflow:hidden;
+    z-index:1;
+  }
+  .estrella{
+    position:absolute;
+    border-radius:50%;
+    background:var(--plata);
+    animation:titilar var(--dur) ease-in-out infinite;
+    animation-delay:var(--delay);
+  }
+  @keyframes titilar{
+    0%,100%{opacity:0.15; transform:scale(0.8);}
+    50%{opacity:0.95; transform:scale(1.15);}
+  }
+
+  /* ---------- Constelación: signature element ---------- */
+  .constelacion{
+    position:absolute;
+    top:0;left:0;width:100%;height:100%;
+    pointer-events:none;
+    z-index:3;
+    opacity:0;
+    transition:opacity 1400ms ease;
+  }
+  .pantalla.activa .constelacion{ opacity:1; }
+  .constelacion line{
+    stroke:var(--lavanda);
+    stroke-width:0.6;
+    opacity:0;
+    stroke-dasharray:4 4;
+    animation:trazar-linea 1.8s ease forwards;
+  }
+  .constelacion circle{
+    fill:var(--plata);
+    opacity:0;
+    animation:punto-luz 900ms ease forwards;
+    filter:drop-shadow(0 0 4px rgba(238,241,251,0.8));
+  }
+  @keyframes trazar-linea{
+    0%{ opacity:0; }
+    100%{ opacity:0.55; }
+  }
+  @keyframes punto-luz{
+    0%{ opacity:0; transform:scale(0); }
+    60%{ opacity:1; transform:scale(1.3); }
+    100%{ opacity:0.9; transform:scale(1); }
+  }
+
+  /* ---------- Estela del cursor (rastro de luz) ---------- */
+  .estela{
+    position:fixed;
+    width:5px;height:5px;
+    border-radius:50%;
+    background:var(--plata);
+    box-shadow:0 0 6px 1px var(--plata), 0 0 14px 3px rgba(157,140,255,0.6);
+    pointer-events:none;
+    z-index:9999;
+    transform:translate(-50%,-50%);
+    animation:apagar 1100ms ease-out forwards;
+  }
+  @keyframes apagar{
+    0%{opacity:1; transform:translate(-50%,-50%) scale(1);}
+    100%{opacity:0; transform:translate(-50%,-50%) scale(0.15);}
+  }
+
+  /* ---------- Escenario ---------- */
+  .escenario{
+    position:relative;
+    width:min(560px, 92vw);
+    height:min(740px, 88vh);
+    z-index:5;
+  }
+
+  .pantalla{
+    position:absolute;
+    top:0;left:0;width:100%;height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:40px 30px;
+    opacity:0;
+    visibility:hidden;
+    transform:translateY(10px);
+    transition:opacity 1000ms ease, transform 1000ms ease;
+    pointer-events:none;
+  }
+  .pantalla.activa{
+    opacity:1;
+    visibility:visible;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+
+  .eyebrow{
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    font-size:10.5px;
+    color:var(--cian-tenue);
+    opacity:0.8;
+    margin-bottom:24px;
+  }
+
+  h1.pregunta{
+    font-family:'Spectral', serif;
+    font-weight:300;
+    font-style:italic;
+    font-size:clamp(27px, 6vw, 40px);
+    line-height:1.32;
+    color:var(--plata);
+    text-shadow:0 0 30px rgba(157,140,255,0.3);
+    margin-bottom:40px;
+    max-width:460px;
+    letter-spacing:0.01em;
+  }
+
+  .firma-hada{
+    font-family:'Spectral', serif;
+    font-style:italic;
+    font-weight:300;
+    font-size:15px;
+    color:var(--lavanda);
+    margin-top:20px;
+    opacity:0.85;
+    letter-spacing:0.05em;
+  }
+  .firma-hada::before{
+    content:'☾ ';
+  }
+
+  .texto-hada{
+    font-family:'Spectral', serif;
+    font-style:italic;
+    font-weight:300;
+    font-size:clamp(19px, 4.4vw, 25px);
+    line-height:1.6;
+    color:var(--plata);
+    max-width:430px;
+    text-shadow:0 0 24px rgba(157,140,255,0.22);
+  }
+
+  /* Botones */
+  .botones{
+    display:flex;
+    gap:16px;
+    margin-top:10px;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .boton-principal{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:14px;
+    letter-spacing:0.02em;
+    color:var(--noche);
+    background:linear-gradient(135deg, var(--plata), #cfd6f0);
+    border:none;
+    padding:14px 32px;
+    border-radius:2px;
+    cursor:pointer;
+    box-shadow:0 0 0 1px rgba(238,241,251,0.2), 0 8px 24px rgba(157,140,255,0.25);
+    transition:transform 240ms ease, box-shadow 240ms ease, background 240ms ease;
+    position:relative;
+  }
+  .boton-principal:hover{
+    transform:translateY(-2px);
+    background:linear-gradient(135deg, #ffffff, var(--plata));
+    box-shadow:0 0 0 1px rgba(238,241,251,0.4), 0 12px 30px rgba(157,140,255,0.4);
+  }
+  .boton-fantasma{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:500;
+    font-size:13px;
+    letter-spacing:0.02em;
+    color:var(--plata);
+    background:transparent;
+    border:1px solid rgba(238,241,251,0.28);
+    padding:13px 28px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:all 240ms ease;
+  }
+  .boton-fantasma:hover{
+    border-color:var(--lavanda);
+    color:var(--lavanda);
+  }
+
+  .continuar-tap{
+    margin-top:48px;
+    font-family:'Space Grotesk', sans-serif;
+    font-size:11px;
+    letter-spacing:0.22em;
+    text-transform:uppercase;
+    color:rgba(238,241,251,0.5);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .continuar-tap .raya{
+    width:22px;height:1px;
+    background:rgba(238,241,251,0.4);
+    animation:respirar-raya 2.4s ease-in-out infinite;
+  }
+  @keyframes respirar-raya{
+    0%,100%{width:14px; opacity:0.4;}
+    50%{width:28px; opacity:0.9;}
+  }
+
+  /* ---------- Pista, ahora como "fragmento" lateral discreto ---------- */
+  .pista{
+    position:absolute;
+    bottom:24px;
+    left:50%;
+    transform:translateX(-50%) translateY(6px);
+    width:min(400px, 84vw);
+    border-top:1px solid rgba(157,140,255,0.3);
+    padding-top:14px;
+    opacity:0;
+    transition:opacity 1000ms ease 700ms, transform 1000ms ease 700ms;
+  }
+  .pantalla.activa .pista{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+  .pista-texto{
+    font-family:'Spectral', serif;
+    font-style:italic;
+    font-weight:300;
+    font-size:14px;
+    line-height:1.4;
+    color:rgba(238,241,251,0.7);
+  }
+
+  /* ---------- Pantalla 1: punto de luz pulsante ---------- */
+  .nucleo-luz{
+    width:64px;height:64px;
+    border-radius:50%;
+    background:radial-gradient(circle, var(--plata) 0%, var(--lavanda) 55%, transparent 100%);
+    margin-bottom:14px;
+    cursor:pointer;
+    animation:pulso-nucleo 2.4s ease-in-out infinite;
+    box-shadow:0 0 40px 10px rgba(157,140,255,0.35);
+  }
+  @keyframes pulso-nucleo{
+    0%,100%{ transform:scale(1); box-shadow:0 0 40px 10px rgba(157,140,255,0.35); }
+    50%{ transform:scale(1.15); box-shadow:0 0 60px 18px rgba(157,140,255,0.55); }
+  }
+
+  /* ---------- Pantalla 4: marco de invitación ---------- */
+  .marco-invitacion{
+    border:1px solid rgba(157,140,255,0.4);
+    padding:42px 32px;
+    position:relative;
+  }
+  .marco-invitacion::before, .marco-invitacion::after{
+    content:'';
+    position:absolute;
+    width:14px;height:14px;
+    border:1px solid var(--dorado);
+  }
+  .marco-invitacion::before{ top:-1px; left:-1px; border-right:none; border-bottom:none; }
+  .marco-invitacion::after{ bottom:-1px; right:-1px; border-left:none; border-top:none; }
+
+  .titulo-club{
+    font-family:'Spectral', serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:clamp(34px, 7.5vw, 48px);
+    color:var(--plata);
+    margin:8px 0 18px;
+    text-shadow:0 0 36px rgba(157,140,255,0.4);
+    letter-spacing:0.01em;
+  }
+  .descripcion-club{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:400;
+    font-size:14.5px;
+    line-height:1.7;
+    color:rgba(238,241,251,0.82);
+    max-width:360px;
+    margin:0 auto;
+    letter-spacing:0.01em;
+  }
+
+  /* ---------- Pantalla 5: brújula / rosa de los vientos como sello ---------- */
+  .sello-rosa{
+    width:130px;height:130px;
+    margin:20px 0 30px;
+    cursor:pointer;
+    transition:transform 400ms ease;
+  }
+  .sello-rosa:hover{ transform:rotate(8deg) scale(1.04); }
+  .sello-rosa.activado{
+    animation:girar-disolver 800ms ease forwards;
+  }
+  @keyframes girar-disolver{
+    0%{ transform:rotate(0) scale(1); opacity:1; }
+    100%{ transform:rotate(140deg) scale(0); opacity:0; }
+  }
+
+  /* ---------- Pantalla 6: luna creciente que se abre ---------- */
+  .luna-zona{
+    transition:opacity 500ms ease, transform 500ms ease;
+  }
+  .luna-zona.escondido{
+    opacity:0;
+    transform:scale(0.85);
+    pointer-events:none;
+    position:absolute;
+  }
+
+  .luna-svg{
+    width:170px;
+    height:170px;
+    cursor:pointer;
+    margin:8px 0 26px;
+    filter:drop-shadow(0 0 30px rgba(238,241,251,0.25));
+    animation:flotar-luna 4s ease-in-out infinite;
+  }
+  @keyframes flotar-luna{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-10px); }
+  }
+  #mitadIzq, #mitadDer{
+    transition:transform 750ms cubic-bezier(.34,1.4,.64,1), opacity 750ms ease;
+    transform-origin:85px 85px;
+  }
+  .luna-svg.abierta{ animation:none; }
+  .luna-svg.abierta #mitadIzq{ transform:translateX(-70px) rotate(-25deg); opacity:0; }
+  .luna-svg.abierta #mitadDer{ transform:translateX(70px) rotate(25deg); opacity:0; }
+  .luna-svg.abierta .nucleo-interior{
+    opacity:1;
+    transform:scale(1.4);
+  }
+  .nucleo-interior{
+    opacity:0;
+    transform:scale(0.3);
+    transition:opacity 600ms ease 300ms, transform 600ms ease 300ms;
+  }
+  .luna-svg.abierta .destello-luna circle{
+    animation:destello-sube 1100ms ease-out forwards;
+  }
+  .destello-luna circle{ opacity:0; }
+  .destello-luna circle:nth-child(1){ animation-delay:80ms; }
+  .destello-luna circle:nth-child(2){ animation-delay:200ms; }
+  .destello-luna circle:nth-child(3){ animation-delay:40ms; }
+  .destello-luna circle:nth-child(4){ animation-delay:260ms; }
+  .destello-luna circle:nth-child(5){ animation-delay:150ms; }
+  @keyframes destello-sube{
+    0%{ opacity:0; transform:translateY(0) scale(0.5); }
+    35%{ opacity:1; }
+    100%{ opacity:0; transform:translateY(-48px) scale(1.4); }
+  }
+
+  .revelacion-final{
+    opacity:0;
+    transform:translateY(12px);
+    transition:opacity 800ms ease 250ms, transform 800ms ease 250ms;
+    pointer-events:none;
+    position:absolute;
+    top:0;left:0;width:100%;height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:40px 30px;
+  }
+  .revelacion-final.visible{
+    opacity:1;
+    transform:translateY(0);
+    pointer-events:auto;
+  }
+
+  .fecha-sesion{
+    border-top:1px solid rgba(157,140,255,0.35);
+    border-bottom:1px solid rgba(157,140,255,0.35);
+    padding:20px 0;
+    margin-top:6px;
+  }
+  .fecha-dia{
+    font-family:'Spectral', serif;
+    font-style:italic;
+    font-weight:400;
+    font-size:clamp(20px,5vw,25px);
+    color:var(--plata);
+    text-transform:capitalize;
+  }
+  .fecha-hora{
+    font-family:'Space Grotesk', sans-serif;
+    letter-spacing:0.16em;
+    font-size:12.5px;
+    color:var(--cian-tenue);
+    margin-top:6px;
+    text-transform:uppercase;
+  }
+
+  .detalle-sesion{
+    font-family:'Space Grotesk', sans-serif;
+    font-size:12.5px;
+    color:rgba(238,241,251,0.6);
+    margin-top:24px;
+    letter-spacing:0.03em;
+  }
+
+  /* Indicador de progreso: fase lunar en vez de puntos genéricos */
+  .progreso{
+    position:absolute;
+    top:30px;
+    left:50%;
+    transform:translateX(-50%);
+    display:flex;
+    gap:9px;
+    z-index:10;
+  }
+  .punto-progreso{
+    width:5px;height:5px;
+    border-radius:50%;
+    background:rgba(238,241,251,0.2);
+    transition:all 400ms ease;
+  }
+  .punto-progreso.hecho{
+    background:var(--lavanda);
+    box-shadow:0 0 6px rgba(157,140,255,0.7);
+  }
+  .punto-progreso.actual{
+    background:var(--plata);
+    transform:scale(1.7);
+    box-shadow:0 0 10px rgba(238,241,251,0.9);
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .estrella, .nucleo-luz, .continuar-tap .raya, .luna-svg, .constelacion circle, .constelacion line{
+      animation:none !important;
+    }
+  }
+
+  @media (max-width: 420px){
+    .marco-invitacion{padding:32px 20px;}
+    .luna-svg{width:140px; height:140px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <div class="cielo" id="cielo"></div>
+
+  <div class="progreso" id="progreso"></div>
+
+  <div class="escenario">
+
+    <!-- PANTALLA 1 -->
+    <section class="pantalla activa" data-n="1">
+      <svg class="constelacion" id="const1" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="eyebrow">Un mensaje cruza el cielo</div>
+      <div class="nucleo-luz"></div>
+      <h1 class="pregunta">¿Confías en el poder<br>de los deseos de tu corazón?</h1>
+      <div class="botones">
+        <button class="boton-principal" onclick="irA(2)">Sí, confío</button>
+        <button class="boton-fantasma" onclick="irA(2)">Quiero creer</button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 2 -->
+    <section class="pantalla" data-n="2">
+      <svg class="constelacion" id="const2" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="eyebrow">Tu hada habla</div>
+      <p class="texto-hada">Tu hada está de vuelta<br>para recordarte que no debes dudar de ti,<br>de tu poder y de todo<br>lo que puedes crear<br>con tu corazón abierto.</p>
+      <div class="firma-hada">tu hada</div>
+      <div class="continuar-tap" onclick="irA(3)"><span class="raya"></span>Continuar<span class="raya"></span></div>
+    </section>
+
+    <!-- PANTALLA 3 -->
+    <section class="pantalla" data-n="3">
+      <svg class="constelacion" id="const3" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="eyebrow">El secreto que escuchó</div>
+      <p class="texto-hada">Escuché que quieres ir<br>a un Club de Lectura...<br><br>pues este, ha llegado hasta ti.</p>
+      <div class="continuar-tap" onclick="irA(4)"><span class="raya"></span>Continuar<span class="raya"></span></div>
+    </section>
+
+    <!-- PANTALLA 4 -->
+    <section class="pantalla" data-n="4">
+      <svg class="constelacion" id="const4" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="marco-invitacion">
+        <div class="eyebrow">Invitación personalizada</div>
+        <div class="titulo-club">El Rincón de las Ideas</div>
+        <p class="descripcion-club">Un club de lectura íntimo, poderoso y en crecimiento, donde exploraremos creatividad, espiritualidad, negocios y todo lo que despierte tu mente.</p>
+      </div>
+      <div class="botones" style="margin-top:34px;">
+        <button class="boton-principal" onclick="irA(5)">Acepto la invitación</button>
+      </div>
+    </section>
+
+    <!-- PANTALLA 5 -->
+    <section class="pantalla" data-n="5">
+      <svg class="constelacion" id="const5" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="eyebrow">El primer ritual</div>
+      <p class="texto-hada" style="margin-bottom:8px;">Toca el sello para continuar<br>el ritual de esta primera sesión.</p>
+      <svg class="sello-rosa" id="selloRosa" onclick="tocarSelloFinal()" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="gradSello" cx="50%" cy="50%" r="60%">
+            <stop offset="0%" stop-color="#eef1fb"/>
+            <stop offset="60%" stop-color="#9d8cff"/>
+            <stop offset="100%" stop-color="#1c2d5e"/>
+          </radialGradient>
+        </defs>
+        <circle cx="50" cy="50" r="46" fill="none" stroke="rgba(238,241,251,0.3)" stroke-width="0.8"/>
+        <g stroke="var(--lavanda)" stroke-width="1" opacity="0.8">
+          <line x1="50" y1="6" x2="50" y2="94"/>
+          <line x1="6" y1="50" x2="94" y2="50"/>
+          <line x1="17" y1="17" x2="83" y2="83"/>
+          <line x1="17" y1="83" x2="83" y2="17"/>
+        </g>
+        <circle cx="50" cy="50" r="11" fill="url(#gradSello)"/>
+      </svg>
+    </section>
+
+    <!-- PANTALLA 6 -->
+    <section class="pantalla" data-n="6">
+      <svg class="constelacion" id="const6" viewBox="0 0 560 740" preserveAspectRatio="none"></svg>
+      <div class="eyebrow">Sesión I · El Rincón de las Ideas</div>
+
+      <div class="luna-zona" id="lunaZona">
+        <p class="texto-hada" style="font-size:clamp(18px,4.2vw,22px); margin-bottom:30px;">
+          Has sido elegida para abrir<br>el libro secreto de la primera sesión.
+        </p>
+
+        <svg class="luna-svg" id="lunaRegalo" onclick="abrirLuna()" viewBox="0 0 170 170" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <radialGradient id="gradNucleo" cx="50%" cy="50%" r="60%">
+              <stop offset="0%" stop-color="#ffffff"/>
+              <stop offset="60%" stop-color="#f0c869"/>
+              <stop offset="100%" stop-color="#ff9ec4"/>
+            </radialGradient>
+            <linearGradient id="gradMitad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#eef1fb"/>
+              <stop offset="100%" stop-color="#9d8cff"/>
+            </linearGradient>
+          </defs>
+
+          <g id="mitadIzq">
+            <path d="M85 15 A70 70 0 0 0 85 155 A55 70 0 0 1 85 15 Z" fill="url(#gradMitad)"/>
+          </g>
+          <g id="mitadDer">
+            <path d="M85 15 A70 70 0 0 1 85 155 A55 70 0 0 0 85 15 Z" fill="url(#gradMitad)"/>
+          </g>
+
+          <circle class="nucleo-interior" cx="85" cy="85" r="20" fill="url(#gradNucleo)"/>
+
+          <g class="destello-luna">
+            <circle cx="60" cy="70" r="3" fill="#f0c869"/>
+            <circle cx="112" cy="64" r="2.5" fill="#ff9ec4"/>
+            <circle cx="85" cy="42" r="3.2" fill="#eef1fb"/>
+            <circle cx="68" cy="100" r="2" fill="#9d8cff"/>
+            <circle cx="106" cy="102" r="2.2" fill="#f0c869"/>
+          </g>
+        </svg>
+
+        <div class="continuar-tap" id="tapLuna" onclick="abrirLuna()"><span class="raya"></span>Abrir la luna<span class="raya"></span></div>
+      </div>
+
+      <div class="revelacion-final" id="revelacionFinal">
+        <div class="eyebrow" style="margin-bottom:18px;">El libro permanece en secreto</div>
+        <p class="texto-hada" style="font-size:clamp(19px,4.5vw,24px); margin-bottom:24px;">
+          Se revelará en nuestro<br>primer encuentro.
+        </p>
+        <div class="fecha-sesion">
+          <div class="fecha-dia">Jueves 25 de junio</div>
+          <div class="fecha-hora">7:00 p.m.</div>
+        </div>
+        <p class="detalle-sesion">Trae tu corazón abierto y muchas ganas de crear</p>
+      </div>
+    </section>
+
+  </div>
+
+</div>
+
+<script>
+  const totalPantallas = 6;
+  let actual = 1;
+
+  const pistas = {
+    2: "“No esperes hasta saber quién eres para empezar a crear.”",
+    3: "“Nada es completamente original: todo trabajo creativo nace de lo que ya existió antes.”",
+    4: "“Eres la suma de tus influencias. Rodéate de las cosas que de verdad amas.”",
+    5: "“No te preocupes por investigar demasiado: empieza por buscar.”"
+  };
+
+  // ---------- Constelaciones distintas por pantalla ----------
+  // Cada figura usa coordenadas dentro del viewBox 560x740
+  const figuras = {
+    1: [ // corazón disperso
+      [280,160],[230,200],[330,200],[200,250],[360,250],[230,320],[330,320],[280,360]
+    ],
+    2: [ // ala de hada
+      [200,180],[260,160],[320,190],[360,250],[330,310],[260,340],[210,300],[230,230]
+    ],
+    3: [ // libro abierto esquemático
+      [200,260],[280,230],[360,260],[280,300],[200,340],[280,370],[360,340]
+    ],
+    4: [ // marco / sello
+      [220,180],[340,180],[360,260],[340,340],[220,340],[200,260]
+    ],
+    5: [ // brújula
+      [280,160],[280,400],[160,280],[400,280],[280,280]
+    ],
+    6: [ // luna creciente
+      [320,180],[300,220],[290,280],[300,340],[320,380],[300,300]
+    ]
+  };
+
+  function dibujarConstelacion(n){
+    const svg = document.getElementById('const'+n);
+    if(!svg) return;
+    svg.innerHTML = '';
+    const puntos = figuras[n];
+    if(!puntos) return;
+
+    // líneas entre puntos consecutivos
+    for(let i=0;i<puntos.length-1;i++){
+      const [x1,y1] = puntos[i];
+      const [x2,y2] = puntos[i+1];
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+      line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+      line.style.animationDelay = (i*120)+'ms';
+      svg.appendChild(line);
+    }
+    // puntos de luz
+    puntos.forEach(([x,y], i) => {
+      const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+      c.setAttribute('cx',x); c.setAttribute('cy',y);
+      c.setAttribute('r', 2.4 + Math.random()*1.4);
+      c.style.animationDelay = (i*130 + 200)+'ms';
+      svg.appendChild(c);
+    });
+  }
+
+  function crearProgreso(){
+    const cont = document.getElementById('progreso');
+    cont.innerHTML = '';
+    for(let i=1;i<=totalPantallas;i++){
+      const d = document.createElement('div');
+      d.className = 'punto-progreso';
+      d.id = 'punto'+i;
+      cont.appendChild(d);
+    }
+    actualizarProgreso();
+  }
+
+  function actualizarProgreso(){
+    for(let i=1;i<=totalPantallas;i++){
+      const d = document.getElementById('punto'+i);
+      d.className = 'punto-progreso' + (i < actual ? ' hecho' : i === actual ? ' actual' : '');
+    }
+  }
+
+  function montarPista(n){
+    document.querySelectorAll('.pista').forEach(p => p.remove());
+    if(pistas[n]){
+      const pantalla = document.querySelector('.pantalla[data-n="'+n+'"]');
+      const pista = document.createElement('div');
+      pista.className = 'pista';
+      pista.innerHTML = '<span class="pista-texto">'+pistas[n]+'</span>';
+      pantalla.appendChild(pista);
+    }
+  }
+
+  function irA(n){
+    if(n < 1 || n > totalPantallas) return;
+    document.querySelectorAll('.pantalla').forEach(p => p.classList.remove('activa'));
+    const destino = document.querySelector('.pantalla[data-n="'+n+'"]');
+    destino.classList.add('activa');
+    actual = n;
+    actualizarProgreso();
+    montarPista(n);
+    dibujarConstelacion(n);
+  }
+
+  function tocarSelloFinal(){
+    const sello = document.getElementById('selloRosa');
+    sello.classList.add('activado');
+    setTimeout(()=> irA(6), 700);
+  }
+
+  function abrirLuna(){
+    const luna = document.getElementById('lunaRegalo');
+    if(luna.classList.contains('abierta')) return;
+    luna.classList.add('abierta');
+    document.getElementById('tapLuna').style.opacity = '0';
+
+    setTimeout(()=>{
+      document.getElementById('lunaZona').classList.add('escondido');
+      document.getElementById('revelacionFinal').classList.add('visible');
+    }, 750);
+  }
+
+  // ---------- Cielo estrellado ----------
+  function crearCielo(){
+    const cont = document.getElementById('cielo');
+    const cantidad = 70;
+    for(let i=0;i<cantidad;i++){
+      const e = document.createElement('div');
+      e.className = 'estrella';
+      const tam = 1 + Math.random()*2.4;
+      e.style.width = tam+'px';
+      e.style.height = tam+'px';
+      e.style.left = Math.random()*100+'%';
+      e.style.top = Math.random()*100+'%';
+      e.style.setProperty('--dur', (2.5+Math.random()*4)+'s');
+      e.style.setProperty('--delay', (Math.random()*5)+'s');
+      cont.appendChild(e);
+    }
+  }
+
+  // ---------- Estela del cursor ----------
+  let ultimoTiempo = 0;
+  function crearEstela(x,y){
+    const ahora = Date.now();
+    if(ahora - ultimoTiempo < 50) return;
+    ultimoTiempo = ahora;
+    const e = document.createElement('div');
+    e.className = 'estela';
+    e.style.left = x+'px';
+    e.style.top = y+'px';
+    const colores = ['#eef1fb','#9d8cff','#ff9ec4','#7ddde0'];
+    e.style.background = colores[Math.floor(Math.random()*colores.length)];
+    document.body.appendChild(e);
+    setTimeout(()=> e.remove(), 1150);
+  }
+  window.addEventListener('mousemove', (ev) => crearEstela(ev.clientX, ev.clientY));
+  window.addEventListener('touchmove', (ev) => {
+    if(ev.touches[0]) crearEstela(ev.touches[0].clientX, ev.touches[0].clientY);
+  });
+
+  crearProgreso();
+  crearCielo();
+  montarPista(1);
+  dibujarConstelacion(1);
+</script>
+
+</body>
+</html>
